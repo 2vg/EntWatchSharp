@@ -115,7 +115,7 @@ namespace EntWatchSharp
 
 		[ConsoleCommand("ehud", "Allows the player to switch the HUD")]
 		[ConsoleCommand("css_hud", "Allows the player to switch the HUD")]
-		[CommandHelper(minArgs: 1, usage: "[number]", whoCanExecute: CommandUsage.CLIENT_ONLY)]
+		[CommandHelper(minArgs: 1, usage: "[0-1] (0=Disabled, 1=Enabled)", whoCanExecute: CommandUsage.CLIENT_ONLY)]
 #nullable enable
 		public void OnEWChangeHud(CCSPlayerController? player, CommandInfo command)
 #nullable disable
@@ -130,9 +130,11 @@ namespace EntWatchSharp
 			try
 			{
 				if (!Int32.TryParse(command.GetArg(1), out int number)) number = 0;
-				if (number >= 0 && number <= 3)
+				if (number >= 0 && number <= 1)
 				{
-					EW.g_EWPlayer[player].SwitchHud(player, number);
+					// Convert 0->0 (disabled), 1->3 (WorldText only)
+					int actualHudType = number == 0 ? 0 : 3;
+					EW.g_EWPlayer[player].SwitchHud(player, actualHudType);
 
 					EW._PlayerSettingsAPI.SetPlayerSettingsValue(player, "EW_HUD_Type", number.ToString());
 
@@ -140,9 +142,7 @@ namespace EntWatchSharp
 					sMessage = number switch
 					{
 						0 => $"{EW.g_Scheme.color_warning}{Strlocalizer["Reply.Hud.Type"]} {EW.g_Scheme.color_disabled}{Strlocalizer["All.Disabled"]}",
-						1 => $"{EW.g_Scheme.color_warning}{Strlocalizer["Reply.Hud.Type"]} {EW.g_Scheme.color_enabled}{Strlocalizer["All.Enabled"]} {EW.g_Scheme.color_warning}(Center)",
-						2 => $"{EW.g_Scheme.color_warning}{Strlocalizer["Reply.Hud.Type"]} {EW.g_Scheme.color_enabled}{Strlocalizer["All.Enabled"]} {EW.g_Scheme.color_warning}(Alert)",
-						3 => $"{EW.g_Scheme.color_warning}{Strlocalizer["Reply.Hud.Type"]} {EW.g_Scheme.color_enabled}{Strlocalizer["All.Enabled"]} {EW.g_Scheme.color_warning}(WorldText)",
+						1 => $"{EW.g_Scheme.color_warning}{Strlocalizer["Reply.Hud.Type"]} {EW.g_Scheme.color_enabled}{Strlocalizer["All.Enabled"]} {EW.g_Scheme.color_warning}(WorldText)",
 						_ => $"{EW.g_Scheme.color_warning}{Strlocalizer["Reply.Using_number"]}",
 					};
 					UI.ReplyToCommand(player, sMessage, bConsole);

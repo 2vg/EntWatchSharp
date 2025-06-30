@@ -166,7 +166,7 @@ namespace EntWatchSharp
 		{
 			try
 			{
-				string sHUDType = _PlayerSettingsAPI != null ? _PlayerSettingsAPI.GetPlayerSettingsValue(player, "EW_HUD_Type", "3") : "3";
+				string sHUDType = _PlayerSettingsAPI != null ? _PlayerSettingsAPI.GetPlayerSettingsValue(player, "EW_HUD_Type", "1") : "1";
 				string sHUDPos = _PlayerSettingsAPI != null ? _PlayerSettingsAPI.GetPlayerSettingsValue(player, "EW_HUD_Pos", "-6.5_2_7") : "-6.5_2_7";
 				string sHUDSize = _PlayerSettingsAPI != null ? _PlayerSettingsAPI.GetPlayerSettingsValue(player, "EW_HUD_Size", "54") : "54";
 				string sHUDColor = _PlayerSettingsAPI != null ? _PlayerSettingsAPI.GetPlayerSettingsValue(player, "EW_HUD_Color", "255_255_255_255") : "255_255_255_255";
@@ -213,8 +213,12 @@ namespace EntWatchSharp
 					}
 					if (!string.IsNullOrEmpty(sHUDType))
 					{
-						if (!Int32.TryParse(sHUDType, out int number)) number = 3;
-						g_EWPlayer[player].SwitchHud(player, number);
+						if (!Int32.TryParse(sHUDType, out int number)) number = 1;
+						// Convert saved value to actual HUD type
+						// New system: 0=disabled, 1=enabled(WorldText)
+						// Legacy compatibility: 0=disabled, 1,2,3=enabled(WorldText)
+						int actualHudType = number == 0 ? 0 : 3;
+						g_EWPlayer[player].SwitchHud(player, actualHudType);
 					}
 					if (!string.IsNullOrEmpty(sHUDRefresh))
 					{
