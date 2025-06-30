@@ -1,0 +1,9 @@
+EntWatchSharp/bin/*
+EntWatchSharp/obj/*
+EntWatchSharpAPI/bin/*
+EntWatchSharpAPI/obj/*
+EWSTestAPI/bin/*
+EWSTestAPI/obj/*
+build/
+.vs
+.idea/
