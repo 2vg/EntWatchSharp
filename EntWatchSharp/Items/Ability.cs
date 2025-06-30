@@ -99,26 +99,31 @@ namespace EntWatchSharp.Items
 
         public void SetFilter(CEntityInstance activator)
         {
-			if (!string.IsNullOrEmpty(Filter))
-			{
+   if (string.IsNullOrEmpty(ButtonClass) || ButtonID == 0)
+   {
+    return;
+   }
+
+   if (!string.IsNullOrEmpty(Filter))
+   {
                 if (!string.Equals(activator.DesignerName, "player")) return;
                 CCSPlayerPawn pawn = new CCSPlayerController(activator.Handle).PlayerPawn.Value;
                 if (pawn == null || !pawn.IsValid) return;
 
-				if (Filter[0] == '$')
+    if (Filter[0] == '$')
                 {
                     if (Filter.Length > 1) pawn.AcceptInput("AddAttribute", null, null, Filter[1..]);
                 }
                 else if (Filter.Contains(':'))
                 {
-					pawn.AcceptInput("AddContext", null, null, Filter);
+     pawn.AcceptInput("AddContext", null, null, Filter);
                 }
                 else
                 {
-					if (pawn.Entity != null) pawn.Entity.Name = Filter;
+     if (pawn.Entity != null) pawn.Entity.Name = Filter;
                 }
-			}
-		}
+   }
+  }
 
         public void SetSpawnedMath()
         {
@@ -224,39 +229,44 @@ namespace EntWatchSharp.Items
         }
 		public bool Ready()
 		{
+			if (string.IsNullOrEmpty(ButtonClass) || ButtonID == 0)
+			{
+				return false; // 空のアビリティは使用不可
+			}
+
 			// Maybe not needed...
 			/*if (string.Equals(Entity.DesignerName, "func_button") || string.Equals(Entity.DesignerName, "func_rot_button"))
-            {
-                if (new CBaseButton(Entity.Handle).Locked) return false;
-            }
-            else if (string.Equals(Entity.DesignerName, "func_door") || string.Equals(Entity.DesignerName, "func_door_rotating"))
-            {
-                if (new CBaseDoor(Entity.Handle).Locked) return false;
-            }
-            else if (string.Equals(Entity.DesignerName, "func_physbox"))
-            {
+		          {
+		              if (new CBaseButton(Entity.Handle).Locked) return false;
+		          }
+		          else if (string.Equals(Entity.DesignerName, "func_door") || string.Equals(Entity.DesignerName, "func_door_rotating"))
+		          {
+		              if (new CBaseDoor(Entity.Handle).Locked) return false;
+		          }
+		          else if (string.Equals(Entity.DesignerName, "func_physbox"))
+		          {
 				if (!new CPhysBox(Entity.Handle).EnableUseOutput) return false;
 			}
-            else return false;*/
+		          else return false;*/
 			if (LockItem) return false;
-            if (fLastUse >= EW.fGameTime) return false;
+		          if (fLastUse >= EW.fGameTime) return false;
 			switch (Mode)
 			{
 				case 2: return true;
 				case 3:
-                    if (iCurrentUses < MaxUses) return true;
-                    else return false;
+		                  if (iCurrentUses < MaxUses) return true;
+		                  else return false;
 				case 4:
 					if (iCurrentUses < MaxUses) return true;
 					else return false;
 				case 5: return true;
-                case 6:
-                     if (MathCounter != null && MathCounter.IsValid && EntWatchSharp.MathCounter_GetValue(MathCounter) > MathCounter.Min) return true;
-                     else return false;
-                case 7:
+		              case 6:
+		                   if (MathCounter != null && MathCounter.IsValid && EntWatchSharp.MathCounter_GetValue(MathCounter) > MathCounter.Min) return true;
+		                   else return false;
+		              case 7:
 					if (MathCounter != null && MathCounter.IsValid && (MathCounter.Max - EntWatchSharp.MathCounter_GetValue(MathCounter)) < MathCounter.Max) return true;
 					else return false;
-                case 8: return false;
+		              case 8: return false;
 				default: return true;
 			}
 		}

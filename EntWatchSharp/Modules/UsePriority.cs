@@ -25,9 +25,14 @@ namespace EntWatchSharp.Modules
             {
                 LockSpam = true;
                 var Timer = new CounterStrikeSharp.API.Modules.Timers.Timer(0.5f, UsePriorityTimer);
+
+                if (OneItem == null || OneItem.AbilityList == null || OneItem.AbilityList.Count == 0)
+                {
+                    return;
+                }
                 
                 int iNum = 0;
-				foreach(Ability AbilityTest in OneItem.AbilityList.ToList())
+    foreach(Ability AbilityTest in OneItem.AbilityList.ToList())
                 {
                     if(AbilityTest.Ignore)
                     {
@@ -38,7 +43,17 @@ namespace EntWatchSharp.Modules
                 }
                 if (iNum + 1 > OneItem.AbilityList.Count) return; //All Ignore
 
-				if (OneItem.CheckDelay() && OneItem.AbilityList[iNum].Mode != 1 && OneItem.AbilityList[iNum].Mode < 6 && OneItem.AbilityList[iNum].fLastUse < EW.fGameTime && OneItem.AbilityList[iNum].Entity.IsValid && !OneItem.AbilityList[iNum].LockItem)
+                if (iNum >= OneItem.AbilityList.Count)
+                {
+                    return;
+                }
+
+                if (OneItem.AbilityList[iNum] == null)
+                {
+                    return;
+                }
+
+    if (OneItem.CheckDelay() && OneItem.AbilityList[iNum].Mode != 1 && OneItem.AbilityList[iNum].Mode < 6 && OneItem.AbilityList[iNum].fLastUse < EW.fGameTime && OneItem.AbilityList[iNum].Entity != null && OneItem.AbilityList[iNum].Entity.IsValid && !OneItem.AbilityList[iNum].LockItem)
                 {
                     //OneItem.AbilityList[0].Entity.AcceptInput("Press", UPlayer.PlayerPawn.Value, UPlayer.PlayerPawn.Value);
                     OneItem.AbilityList[iNum].Entity.AcceptInput("Use", UPlayer.PlayerPawn.Value, UPlayer.PlayerPawn.Value);
@@ -58,10 +73,18 @@ namespace EntWatchSharp.Modules
             {
                 if (ItemTest.Owner == UPlayer)
                 {
+                    if (ItemTest.AbilityList == null || ItemTest.AbilityList.Count == 0)
+                    {
+                        continue;
+                    }
+
                     int iCountWithoutIgnore = 0;
                     foreach (Ability AbilityTest in ItemTest.AbilityList.ToList())
-                        if (!AbilityTest.Ignore && AbilityTest.Mode != 8) iCountWithoutIgnore++;
-					iCount += iCountWithoutIgnore;
+                    {
+                        if (AbilityTest != null && !AbilityTest.Ignore && AbilityTest.Mode != 8)
+                            iCountWithoutIgnore++;
+                    }
+     iCount += iCountWithoutIgnore;
                     if (!ItemTest.UsePriority || iCount > 1)
                     {
                         OneButton = false;

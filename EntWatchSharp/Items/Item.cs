@@ -39,8 +39,13 @@ namespace EntWatchSharp.Items
             TriggerID = cNewItem.TriggerID;
             SpawnerID = cNewItem.SpawnerID;
 			AbilityList = [];
-            foreach(Ability ability in cNewItem.AbilityList.ToList())
-            {
+			foreach(Ability ability in cNewItem.AbilityList.ToList())
+			{
+				if (string.IsNullOrEmpty(ability.ButtonClass) && ability.ButtonID == 0)
+				{
+					continue;
+				}
+
 				AbilityList.Add(new Ability(ability));
 			}
 			Owner = null;

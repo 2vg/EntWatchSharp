@@ -10,6 +10,7 @@ using CounterStrikeSharp.API.Modules.Utils;
 using EntWatchSharp.Modules.Eban;
 using EntWatchSharp.Modules;
 using CounterStrikeSharp.API.Modules.Entities;
+using Microsoft.Extensions.Logging;
 
 namespace EntWatchSharp
 {
@@ -100,12 +101,6 @@ namespace EntWatchSharp
 			EW.CleanData();
 			EW.LoadScheme();
 			EW.LoadConfig();
-			if (EW.g_Timer != null)
-			{
-				EW.g_Timer.Kill();
-				EW.g_Timer = null;
-			}
-			EW.g_Timer = new CounterStrikeSharp.API.Modules.Timers.Timer(1.0f, TimerUpdate, TimerFlags.REPEAT);
 			LogManager.SystemAction("Info.ChangeMap", sMapName);
 		}
 
@@ -201,6 +196,11 @@ namespace EntWatchSharp
 							{
 								foreach (Ability AbilityTest in ItemTest.AbilityList.ToList())
 								{
+									if (AbilityTest.ButtonID == 0 && string.IsNullOrEmpty(AbilityTest.ButtonClass))
+									{
+										continue;
+									}
+									
 									if (AbilityTest.ButtonID == iButtonID || AbilityTest.ButtonID == 0)
 									{
 										AbilityTest.Entity = entity;
@@ -347,6 +347,12 @@ namespace EntWatchSharp
 		[GameEventHandler]
 		private HookResult OnEventRoundStart(EventRoundStart @event, GameEventInfo info)
 		{
+			if (EW.g_Timer != null)
+			{
+				EW.g_Timer.Kill();
+				EW.g_Timer = null;
+			}
+			EW.g_Timer = new CounterStrikeSharp.API.Modules.Timers.Timer(1.0f, TimerUpdate, TimerFlags.REPEAT);
 			EW.g_ItemList.Clear();
 			Utilities.GetPlayers().Where(p => p is { IsValid: true, IsBot: false, IsHLTV: false, PawnIsAlive: true }).ToList().ForEach(player =>
 			{
@@ -575,11 +581,31 @@ namespace EntWatchSharp
 				EW.UpdateTime();
 				foreach (Item ItemTest in EW.g_ItemList.ToList())
 				{
+					if (ItemTest.AbilityList == null || ItemTest.AbilityList.Count == 0)
+					{
+						continue;
+					}
+
 					foreach (Ability AbilityTest in ItemTest.AbilityList.ToList())
 					{
+						if (AbilityTest == null)
+						{
+							continue;
+						}
+
+						if (string.IsNullOrEmpty(AbilityTest.ButtonClass) || AbilityTest.ButtonID == 0)
+						{
+							continue;
+						}
+
 						if (AbilityTest.Entity != null && AbilityTest.Entity.IsValid && caller == AbilityTest.Entity)
 						{
-							if (ItemTest.Owner != null && ItemTest.Owner.IsValid && ItemTest.Owner.Pawn.IsValid && ItemTest.Owner.Pawn.Index == activator.Index && ItemTest.CheckDelay() && AbilityTest.Ready())
+							if (ItemTest.Owner == null || !ItemTest.Owner.IsValid || ItemTest.Owner.Pawn == null || !ItemTest.Owner.Pawn.IsValid)
+							{
+								return false;
+							}
+
+							if (ItemTest.Owner.Pawn.Index == activator.Index && ItemTest.CheckDelay() && AbilityTest.Ready())
 							{
 								AbilityTest.SetFilter(activator);
 								AbilityTest.Used();
@@ -587,7 +613,10 @@ namespace EntWatchSharp
 								EW.g_cAPI?.OnUseItem(ItemTest.Name, ItemTest.Owner, AbilityTest.Name);
 								return true;
 							}
-							else return false;
+							else
+							{
+								return false;
+							}
 						}
 					}
 				}
