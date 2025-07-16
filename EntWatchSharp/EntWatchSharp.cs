@@ -8,6 +8,7 @@ using EntWatchSharp.Helpers;
 using EntWatchSharp.Modules.Eban;
 using EntWatchSharpAPI;
 using Microsoft.Extensions.Localization;
+using ZLinq;
 
 namespace EntWatchSharp
 {
@@ -50,10 +51,10 @@ namespace EntWatchSharp
 
 			if (hotReload)
 			{
-				Utilities.GetPlayers().Where(p => p is { IsValid: true, IsBot: false, IsHLTV: false }).ToList().ForEach(player =>
+				foreach (var player in Utilities.GetPlayers().Where(p => p is { IsValid: true, IsBot: false, IsHLTV: false }))
 				{
 					EW.LoadClientPrefs(player);
-				});
+				}
 			}
 		}
 
@@ -79,14 +80,14 @@ namespace EntWatchSharp
 				EW.LoadScheme();
 				EW.LoadConfig();
 				EW.g_Timer = new CounterStrikeSharp.API.Modules.Timers.Timer(1.0f, TimerUpdate, TimerFlags.REPEAT);
-				Utilities.GetPlayers().Where(p => p is { IsValid: true, IsBot: false, IsHLTV: false }).ToList().ForEach(player =>
+				foreach (var player in Utilities.GetPlayers().Where(p => p is { IsValid: true, IsBot: false, IsHLTV: false }))
 				{
 					EW.CheckDictionary(player);
 
 					//EW.LoadClientPrefs(player);
 
 					OfflineFunc.PlayerConnectFull(player);
-				});
+				}
 				EW.g_TimerRetryDB = new CounterStrikeSharp.API.Modules.Timers.Timer(1.0f, TimerRetry, TimerFlags.REPEAT);
 			}
 			EW.g_TimerUnban = new CounterStrikeSharp.API.Modules.Timers.Timer(60.0f, TimerUnban, TimerFlags.REPEAT);

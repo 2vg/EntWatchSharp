@@ -10,18 +10,17 @@ namespace EntWatchSharp.Modules
 		{
 			if (Cvar.ClanTag && Cvar.ClanTagInfo)
 			{
-				foreach (Item ItemTest in EW.g_ItemList.ToList())
+				var itemList = EW.g_ItemList.ToList();
+
+				int clanTagUpdates = 0;
+				foreach (Item ItemTest in itemList)
 				{
-					if (ItemTest.Owner != null) ConstructClanTag(ItemTest);
-				}
-				/*Utilities.GetPlayers().ForEach(player =>
-				{
-					if (player.IsValid)
+					if (ItemTest.Owner != null)
 					{
-						EventNextlevelChanged fakeEvent = new(false);
-						fakeEvent.FireEventToClient(player);
+						ConstructClanTag(ItemTest);
+						clanTagUpdates++;
 					}
-				});*/
+				}
 			}
 		}
 

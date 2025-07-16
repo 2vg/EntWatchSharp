@@ -4,6 +4,7 @@ using CounterStrikeSharp.API.Core.Translations;
 using System.Globalization;
 using CounterStrikeSharp.API.Modules.Admin;
 using EntWatchSharp.Items;
+using ZLinq;
 
 namespace EntWatchSharp.Helpers
 {
@@ -21,7 +22,7 @@ namespace EntWatchSharp.Helpers
 
 			if (!(AbilityTest == null || ItemTest.Chat || AbilityTest.Chat_Uses)) return;
 
-			Utilities.GetPlayers().Where(p => p is { IsValid: true, IsBot: false, IsHLTV: false }).ToList().ForEach(pl =>
+			foreach (var pl in Utilities.GetPlayers().AsValueEnumerable().Where(p => p is { IsValid: true, IsBot: false, IsHLTV: false }))
 			{
 				Server.NextFrame(() =>
 				{
@@ -34,7 +35,7 @@ namespace EntWatchSharp.Helpers
 						pl.PrintToChat(EWChatMessage($"{PlayerInfo(pl, sPlayerInfoFormat)} {sColor}{EntWatchSharp.Strlocalizer[sMessage]} {ItemTest.Color}{ItemTest.Name}{((AbilityTest != null && !string.IsNullOrEmpty(AbilityTest.Name)) ? $" ({AbilityTest.Name})" : "")}"));
 					}
 				});
-			});
+			}
 		}
 		public static void EWChatAdminBan(string[] sPIF_admin, string[] sPIF_player, string sReason, bool bAction)
 		{
@@ -49,17 +50,17 @@ namespace EntWatchSharp.Helpers
 			    LogManager.AdminAction(bAction ? "Chat.Admin.Restricted" : "Chat.Admin.Unrestricted", EW.g_Scheme.color_warning, sPIF_admin[3], bAction ? EW.g_Scheme.color_disabled : EW.g_Scheme.color_enabled, sPIF_player[3]);
 				LogManager.AdminAction("Chat.Admin.Reason", EW.g_Scheme.color_warning, sReason);
 
-				Utilities.GetPlayers().Where(p => p is { IsValid: true, IsBot: false, IsHLTV: false }).ToList().ForEach(pl =>
-			    {
-				    Server.NextFrame(() =>
-				    {
-					    using (new WithTemporaryCulture(pl.GetLanguage()))
-					    {
-						    pl.PrintToChat(EWChatMessage(EntWatchSharp.Strlocalizer[bAction ? "Chat.Admin.Restricted" : "Chat.Admin.Unrestricted", EW.g_Scheme.color_warning, PlayerInfo(pl, sPIF_admin), bAction ? EW.g_Scheme.color_disabled : EW.g_Scheme.color_enabled, PlayerInfo(pl, sPIF_player)]));
+				foreach (var pl in Utilities.GetPlayers().AsValueEnumerable().Where(p => p is { IsValid: true, IsBot: false, IsHLTV: false }))
+				{
+					Server.NextFrame(() =>
+					{
+						using (new WithTemporaryCulture(pl.GetLanguage()))
+						{
+							pl.PrintToChat(EWChatMessage(EntWatchSharp.Strlocalizer[bAction ? "Chat.Admin.Restricted" : "Chat.Admin.Unrestricted", EW.g_Scheme.color_warning, PlayerInfo(pl, sPIF_admin), bAction ? EW.g_Scheme.color_disabled : EW.g_Scheme.color_enabled, PlayerInfo(pl, sPIF_player)]));
 							pl.PrintToChat(EWChatMessage(EntWatchSharp.Strlocalizer["Chat.Admin.Reason", EW.g_Scheme.color_warning, sReason]));
 						}
-				    });
-			    });
+					});
+				}
 			});
 		}
 		public static void EWChatAdminSpawn(string[] sPIF_admin, string[] sPIF_receiver, string sItem)
@@ -73,7 +74,7 @@ namespace EntWatchSharp.Helpers
 
 				LogManager.AdminAction("Reply.Spawn.Notify", sPIF_admin[3], sItem, sPIF_receiver[3]);
 
-				Utilities.GetPlayers().Where(p => p is { IsValid: true, IsBot: false, IsHLTV: false }).ToList().ForEach(pl =>
+				foreach (var pl in Utilities.GetPlayers().AsValueEnumerable().Where(p => p is { IsValid: true, IsBot: false, IsHLTV: false }))
 				{
 					Server.NextFrame(() =>
 					{
@@ -82,7 +83,7 @@ namespace EntWatchSharp.Helpers
 							pl.PrintToChat(EWChatMessage(EntWatchSharp.Strlocalizer["Reply.Spawn.Notify", PlayerInfo(pl, sPIF_admin), sItem, PlayerInfo(pl, sPIF_receiver)]));
 						}
 					});
-				});
+				}
 			});
 		}
 		public static void EWChatAdminTransfer(string[] sPIF_admin, string[] sPIF_receiver, string sItem, string[] sPIF_target)
@@ -95,7 +96,7 @@ namespace EntWatchSharp.Helpers
 				}
 				LogManager.AdminAction("Reply.Transfer.Notify", sPIF_admin[3], sItem, sPIF_target[3], sPIF_receiver[3]);
 
-				Utilities.GetPlayers().Where(p => p is { IsValid: true, IsBot: false, IsHLTV: false }).ToList().ForEach(pl =>
+				foreach (var pl in Utilities.GetPlayers().AsValueEnumerable().Where(p => p is { IsValid: true, IsBot: false, IsHLTV: false }))
 				{
 					Server.NextFrame(() =>
 					{
@@ -104,7 +105,7 @@ namespace EntWatchSharp.Helpers
 							pl.PrintToChat(EWChatMessage(EntWatchSharp.Strlocalizer["Reply.Transfer.Notify", PlayerInfo(pl, sPIF_admin), sItem, PlayerInfo(pl, sPIF_target), PlayerInfo(pl, sPIF_receiver)]));
 						}
 					});
-				});
+				}
 			});
 		}
 
@@ -136,7 +137,7 @@ namespace EntWatchSharp.Helpers
 
 			if (bClientNotify)
             {
-                Utilities.GetPlayers().Where(p => p is { IsValid: true, IsBot: false, IsHLTV: false }).ToList().ForEach(pl =>
+                foreach (var pl in Utilities.GetPlayers().AsValueEnumerable().Where(p => p is { IsValid: true, IsBot: false, IsHLTV: false }))
                 {
                     Server.NextFrame(() =>
                     {
@@ -145,7 +146,7 @@ namespace EntWatchSharp.Helpers
                             pl.PrintToChat(EWChatMessage($"{EW.g_Scheme.color_warning}{EntWatchSharp.Strlocalizer["Cvar.Notify", sCvarName, sCvarValue]}"));
                         }
                     });
-                });
+                }
             }
 		}
 

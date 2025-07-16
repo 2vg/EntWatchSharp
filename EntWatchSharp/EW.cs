@@ -9,6 +9,7 @@ using CS2_GameHUDAPI;
 using System.Globalization;
 using CounterStrikeSharp.API.Core.Capabilities;
 using PlayerSettings;
+using ZLinq;
 
 namespace EntWatchSharp
 {
@@ -17,7 +18,7 @@ namespace EntWatchSharp
 		public static readonly byte HUDCHANNEL = 10;
 
 		public static double fGameTime;
-		public static List<ItemConfig> g_ItemConfig = [];
+		public static Dictionary<int, ItemConfig> g_ItemConfig = [];
 		public static List<Item> g_ItemList = [];
 		public static Scheme g_Scheme = new();
 		public static bool g_CfgLoaded = false;
@@ -81,7 +82,11 @@ namespace EntWatchSharp
 					UI.EWSysInfo("Info.Cfg.NotFound", 14);
 					return;
 				}
-				g_ItemConfig = JsonSerializer.Deserialize<List<ItemConfig>>(sData);
+				var itemConfigList = JsonSerializer.Deserialize<List<ItemConfig>>(sData);
+			             if (itemConfigList != null)
+			             {
+			                 g_ItemConfig = itemConfigList.ToDictionary(item => item.HammerID, item => item);
+			             }
 				g_CfgLoaded = true;
 			}
 			catch (Exception e)
@@ -124,12 +129,11 @@ namespace EntWatchSharp
 			if (weapon == null || !weapon.IsValid) return false;
 			try
 			{
-				int iHammerID = Int32.Parse(weapon.UniqueHammerID);
-				foreach (ItemConfig ItemTest in g_ItemConfig.ToList())
+				if (int.TryParse(weapon.UniqueHammerID, out int iHammerID))
 				{
-					if (ItemTest.ThisItemConfig(iHammerID))
+					if (g_ItemConfig.TryGetValue(iHammerID, out var itemConfig))
 					{
-						Item cNewItem = new(ItemTest, weapon);
+						Item cNewItem = new(itemConfig, weapon);
 						g_ItemList.Add(cNewItem);
 						return true;
 					}
@@ -242,10 +246,17 @@ namespace EntWatchSharp
 		public static void ShowHud()
 		{
 			EW.UpdateTime();
-			Utilities.GetPlayers().ForEach(player =>
+			var players = Utilities.GetPlayers().AsValueEnumerable().Where(p => p.IsValid).ToArray();
+
+			int hudUpdates = 0;
+			foreach (var player in players)
 			{
-				if (player.IsValid && CheckDictionary(player) && g_EWPlayer[player].HudPlayer != null) g_EWPlayer[player].HudPlayer.ConstructString(player);
-			});
+				if (CheckDictionary(player) && g_EWPlayer[player].HudPlayer != null)
+				{
+					g_EWPlayer[player].HudPlayer.ConstructString(player);
+					hudUpdates++;
+				}
+			}
 		}
 
 		public static bool IsGameUI(CEntityInstance entity)

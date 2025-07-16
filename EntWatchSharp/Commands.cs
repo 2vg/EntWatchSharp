@@ -10,6 +10,7 @@ using EntWatchSharp.Modules;
 using EntWatchSharp.Modules.Eban;
 using System.Globalization;
 using static EntWatchSharp.Modules.Eban.EbanDB;
+using ZLinq;
 
 namespace EntWatchSharp
 {

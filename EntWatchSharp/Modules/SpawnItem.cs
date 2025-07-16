@@ -2,6 +2,7 @@
 using CounterStrikeSharp.API.Core;
 using EntWatchSharp.Helpers;
 using EntWatchSharp.Items;
+using ZLinq;
 
 namespace EntWatchSharp.Modules
 {
@@ -17,9 +18,11 @@ namespace EntWatchSharp.Modules
 			}
 			int iCount = 0;
 			ItemConfig Item = new();
-			foreach (ItemConfig ItemTest in EW.g_ItemConfig.ToList())
+            System.Collections.IList list = EW.g_ItemConfig.ToList();
+            for (int i = 0; i < list.Count; i++)
 			{
-				if ((ItemTest.Name.Contains(sItemName, StringComparison.OrdinalIgnoreCase) || ItemTest.ShortName.Contains(sItemName, StringComparison.OrdinalIgnoreCase)) && ItemTest.SpawnerID > 0)
+                ItemConfig ItemTest = (ItemConfig)list[i];
+                if (ItemTest != null && (ItemTest.Name.Contains(sItemName, StringComparison.OrdinalIgnoreCase) || ItemTest.ShortName.Contains(sItemName, StringComparison.OrdinalIgnoreCase)) && ItemTest.SpawnerID > 0)
 				{
 					iCount++;
 					Item = ItemTest;
@@ -33,9 +36,11 @@ namespace EntWatchSharp.Modules
 			if (iCount > 1)
 			{
 				UI.EWReplyInfo(admin, "Reply.Spawn.ManyItems", bConsole);
-				foreach (ItemConfig ItemTest in EW.g_ItemConfig.ToList())
+                System.Collections.IList list1 = EW.g_ItemConfig.ToList();
+                for (int i = 0; i < list1.Count; i++)
 				{
-					if ((ItemTest.Name.Contains(sItemName, StringComparison.OrdinalIgnoreCase) || ItemTest.ShortName.Contains(sItemName, StringComparison.OrdinalIgnoreCase)) && ItemTest.SpawnerID > 0)
+                    ItemConfig ItemTest = (ItemConfig)list1[i];
+                    if (ItemTest != null && (ItemTest.Name.Contains(sItemName, StringComparison.OrdinalIgnoreCase) || ItemTest.ShortName.Contains(sItemName, StringComparison.OrdinalIgnoreCase)) && ItemTest.SpawnerID > 0)
 					{
 						UI.EWReplyInfo(admin, $"~{ItemTest.Name} ({ItemTest.ShortName})", bConsole);
 					}

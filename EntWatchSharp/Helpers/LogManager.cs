@@ -43,7 +43,7 @@ namespace EntWatchSharp.Helpers
 
 		public static void LoadConfig(string ModuleDirectory)
 		{
-			foreach (LogCfg cfg in LM_CFG.ToList())
+			foreach (LogCfg cfg in LM_CFG)
 			{
 				cfg.LWritter?.Dispose();
 				cfg.LWritter = null;
@@ -56,7 +56,7 @@ namespace EntWatchSharp.Helpers
 				sData = File.ReadAllText(sConfig);
 				List<LogCfg> CFGBuffer = JsonSerializer.Deserialize<List<LogCfg>>(sData);
 				if (CFGBuffer == null) return;
-				foreach (LogCfg cfg in CFGBuffer.ToList())
+				foreach (LogCfg cfg in CFGBuffer)
 				{
 					ValidateCFG(cfg, ModuleDirectory);
 				}
@@ -65,7 +65,7 @@ namespace EntWatchSharp.Helpers
 
 		public static void UnInit()
 		{
-			foreach (LogCfg cfg in LM_CFG.ToList())
+			foreach (LogCfg cfg in LM_CFG)
 			{
 				cfg.LWritter?.Dispose();
 				cfg.LWritter = null;
@@ -90,7 +90,7 @@ namespace EntWatchSharp.Helpers
 
 			bool bNotFound = true;
 
-			foreach (LogCfg cfg in LM_CFG.ToList())
+			foreach (LogCfg cfg in LM_CFG)
 			{
 				if (string.Equals(CfgTest.Type.ToLower(), cfg.Type.ToLower()) && string.Equals(CfgTest.Send, cfg.Send))
 				{
@@ -130,7 +130,7 @@ namespace EntWatchSharp.Helpers
 
 		public static void ItemAction(string sMessage, string sPlayerInfo, string sItemWithAbility)
 		{
-			foreach (LogCfg cfg in LM_CFG.ToList())
+			foreach (LogCfg cfg in LM_CFG)
 			{
 				if(cfg.ItemInfo)
 				{
@@ -149,7 +149,7 @@ namespace EntWatchSharp.Helpers
 
 		public static void AdminAction(string sMessage, params object[] arg)
 		{
-			foreach (LogCfg cfg in LM_CFG.ToList())
+			foreach (LogCfg cfg in LM_CFG)
 			{
 				if (cfg.AdminInfo)
 				{
@@ -168,7 +168,7 @@ namespace EntWatchSharp.Helpers
 
 		public static void SystemAction(string sMessage, params object[] arg)
 		{
-			foreach (LogCfg cfg in LM_CFG.ToList())
+			foreach (LogCfg cfg in LM_CFG)
 			{
 				if (cfg.SystemInfo)
 				{
@@ -187,7 +187,7 @@ namespace EntWatchSharp.Helpers
 
 		public static void CvarAction(string sCvarName, string sCvarValue)
 		{
-			foreach (LogCfg cfg in LM_CFG.ToList())
+			foreach (LogCfg cfg in LM_CFG)
 			{
 				if (cfg.CvarInfo)
 				{

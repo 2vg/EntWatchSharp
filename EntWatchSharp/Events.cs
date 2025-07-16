@@ -11,6 +11,7 @@ using EntWatchSharp.Modules.Eban;
 using EntWatchSharp.Modules;
 using CounterStrikeSharp.API.Modules.Entities;
 using Microsoft.Extensions.Logging;
+using ZLinq;
 
 namespace EntWatchSharp
 {
@@ -190,11 +191,11 @@ namespace EntWatchSharp
 							if ((cDoor.Spawnflags & 256) != 1) return;
 							iButtonID = Int32.Parse(cDoor.UniqueHammerID);
 						}
-						foreach (Item ItemTest in EW.g_ItemList.ToList())
+						foreach (Item ItemTest in EW.g_ItemList)
 						{
 							if (weapon.Index == ItemTest.WeaponHandle.Index)
 							{
-								foreach (Ability AbilityTest in ItemTest.AbilityList.ToList())
+								foreach (Ability AbilityTest in ItemTest.AbilityList)
 								{
 									if (AbilityTest.ButtonID == 0 && string.IsNullOrEmpty(AbilityTest.ButtonClass))
 									{
@@ -223,10 +224,10 @@ namespace EntWatchSharp
 					_ = new CounterStrikeSharp.API.Modules.Timers.Timer(2.0f, () =>
 					{
 						if (cMathCounter == null || !cMathCounter.IsValid || cMathCounter.Entity == null || string.IsNullOrEmpty(cMathCounter.Entity.Name)) return; //Bad math_counter
-						foreach (Item ItemTest in EW.g_ItemList.ToList())
+						foreach (Item ItemTest in EW.g_ItemList)
 						{
 							if (ItemTest.WeaponHandle == null || !ItemTest.WeaponHandle.IsValid || ItemTest.WeaponHandle.Entity == null) continue;
-							foreach (Ability AbilityTest in ItemTest.AbilityList.ToList())
+							foreach (Ability AbilityTest in ItemTest.AbilityList)
 							{
 								if (!AbilityTest.MathFindSpawned && AbilityTest.MathID > 0 && AbilityTest.MathID == Int32.Parse(cMathCounter.UniqueHammerID))
 								{
@@ -261,9 +262,12 @@ namespace EntWatchSharp
 				var weapon = new CBasePlayerWeapon(entity.Handle);
 				Server.NextFrame(() =>
 				{
-					foreach (Item ItemTest in EW.g_ItemList.ToList())
+					for (int i = EW.g_ItemList.Count - 1; i >= 0; i--)
 					{
-						if (ItemTest.WeaponHandle == weapon) EW.g_ItemList.Remove(ItemTest);
+						if (EW.g_ItemList[i].WeaponHandle == weapon)
+						{
+							EW.g_ItemList.RemoveAt(i);
+						}
 					}
 				});
 			}
@@ -272,13 +276,13 @@ namespace EntWatchSharp
 			{
 				Server.NextFrame(() =>
 				{
-					foreach (Item ItemTest in EW.g_ItemList.ToList())
+					foreach (Item ItemTest in EW.g_ItemList)
 					{
-						foreach (Ability AbilityTest in ItemTest.AbilityList.ToList())
+						for (int i = ItemTest.AbilityList.Count - 1; i >= 0; i--)
 						{
-							if (AbilityTest.Entity == entity)
+							if (ItemTest.AbilityList[i].Entity == entity)
 							{
-								ItemTest.AbilityList.Remove(AbilityTest);
+								ItemTest.AbilityList.RemoveAt(i);
 								if (ItemTest.Owner != null && EW.CheckDictionary(ItemTest.Owner)) EW.g_EWPlayer[ItemTest.Owner].UsePriorityPlayer.UpdateCountButton(ItemTest.Owner);
 							}
 						}
@@ -289,13 +293,13 @@ namespace EntWatchSharp
 				CMathCounter cMathCounter = new(entity.Handle);
 				Server.NextFrame(() =>
 				{
-					foreach (Item ItemTest in EW.g_ItemList.ToList())
+					foreach (Item ItemTest in EW.g_ItemList)
 					{
-						foreach (Ability AbilityTest in ItemTest.AbilityList.ToList())
+						for (int i = ItemTest.AbilityList.Count - 1; i >= 0; i--)
 						{
-							if (AbilityTest.MathID > 0 && AbilityTest.MathCounter == cMathCounter)
+							if (ItemTest.AbilityList[i].MathID > 0 && ItemTest.AbilityList[i].MathCounter == cMathCounter)
 							{
-								ItemTest.AbilityList.Remove(AbilityTest);
+								ItemTest.AbilityList.RemoveAt(i);
 								if (EW.CheckDictionary(ItemTest.Owner)) EW.g_EWPlayer[ItemTest.Owner].UsePriorityPlayer.UpdateCountButton(ItemTest.Owner);
 							}
 						}
@@ -308,11 +312,15 @@ namespace EntWatchSharp
 		private void OnOnTick_Listener()
 		{
 			if (!EW.g_CfgLoaded || !Cvar.UsePriority) return;
-			Utilities.GetPlayers().Where(p => p is { IsValid: true, IsBot: false, IsHLTV: false, PawnIsAlive: true }).ToList().ForEach(player =>
+			using (var e = Utilities.GetPlayers().Where(p => p is { IsValid: true, IsBot: false, IsHLTV: false, PawnIsAlive: true }).GetEnumerator())
 			{
-				if (!EW.CheckDictionary(player)) return;
-				EW.g_EWPlayer[player].UsePriorityPlayer.DetectUse(player);
-			});
+				while (e.MoveNext())
+				{
+					var player = e.Current;
+					if (!EW.CheckDictionary(player)) continue;
+					EW.g_EWPlayer[player].UsePriorityPlayer.DetectUse(player);
+				}
+			}
 		}
 
 		private void OnCheckTransmit_Listener(CCheckTransmitInfoList infoList)
@@ -323,21 +331,17 @@ namespace EntWatchSharp
 #nullable disable
 			{
 				if (player == null || !player.IsValid) continue;
-				foreach (KeyValuePair<CCSPlayerController, EWPlayer> ewp in EW.g_EWPlayer)
+				if (Cvar.GlowVIP && EW.g_EWPlayer.TryGetValue(player, out var ewp) && !ewp.PrivilegePlayer.WeaponGlow)
 				{
-					/*if (ewp.Value.HudPlayer is HudWorldText hud && hud.Entity != null && hud.Entity.IsValid && player != ewp.Key)
+					foreach (Item ItemTest in EW.g_ItemList)
 					{
-						info.TransmitEntities.Remove(hud.Entity);
-					}*/
-					if (Cvar.GlowVIP)
-					{
-						if(!ewp.Value.PrivilegePlayer.WeaponGlow)
+						if (Cvar.GlowProp && ItemTest.Prop != null && ItemTest.Prop.IsValid)
 						{
-							foreach (Item ItemTest in EW.g_ItemList.ToList())
-							{
-								if (Cvar.GlowProp && ItemTest.Prop != null && ItemTest.Prop.IsValid) info.TransmitEntities.Remove(ItemTest.Prop);
-								if (Cvar.GlowParticle && ItemTest.Particle != null && ItemTest.Particle.IsValid) info.TransmitEntities.Remove(ItemTest.Particle);
-							}
+							info.TransmitEntities.Remove(ItemTest.Prop);
+						}
+						if (Cvar.GlowParticle && ItemTest.Particle != null && ItemTest.Particle.IsValid)
+						{
+							info.TransmitEntities.Remove(ItemTest.Particle);
 						}
 					}
 				}
@@ -354,11 +358,15 @@ namespace EntWatchSharp
 			}
 			EW.g_Timer = new CounterStrikeSharp.API.Modules.Timers.Timer(1.0f, TimerUpdate, TimerFlags.REPEAT);
 			EW.g_ItemList.Clear();
-			Utilities.GetPlayers().Where(p => p is { IsValid: true, IsBot: false, IsHLTV: false, PawnIsAlive: true }).ToList().ForEach(player =>
+			using (var e = Utilities.GetPlayers().Where(p => p is { IsValid: true, IsBot: false, IsHLTV: false, PawnIsAlive: true }).GetEnumerator())
 			{
-				ClanTag.RemoveClanTag(player);
-				if (EW.CheckDictionary(player)) EW.g_EWPlayer[player].UsePriorityPlayer.UpdateCountButton(player);
-			});
+				while (e.MoveNext())
+				{
+					var player = e.Current;
+					ClanTag.RemoveClanTag(player);
+					if (EW.CheckDictionary(player)) EW.g_EWPlayer[player].UsePriorityPlayer.UpdateCountButton(player);
+				}
+			}
 			return HookResult.Continue;
 		}
 
@@ -385,7 +393,7 @@ namespace EntWatchSharp
 					if (ownerWeapon.Value.AttributeManager.Item.ItemDefinitionIndex != @event.Defindex)
 						continue;
 
-					foreach (Item ItemTest in EW.g_ItemList.ToList())
+					foreach (Item ItemTest in EW.g_ItemList)
 					{
 						if (ItemTest.ThisItem(ownerWeapon.Index))
 						{
@@ -397,7 +405,7 @@ namespace EntWatchSharp
 							EW.g_cAPI?.OnPickUpItem(ItemTest.Name, pl);
 							ClanTag.UpdatePickUp(ItemTest);
 							ItemTest.DisableGlow();
-							foreach (OfflineBan OfflineTest in EW.g_OfflinePlayer.ToList())
+							foreach (OfflineBan OfflineTest in EW.g_OfflinePlayer)
 							{
 								if (pl.UserId == OfflineTest.UserID)
 								{
@@ -431,7 +439,7 @@ namespace EntWatchSharp
 						return HookResult.Handled;
 					}
 
-					foreach (Item ItemTest in EW.g_ItemList.ToList())
+					foreach (Item ItemTest in EW.g_ItemList)
 					{
 						if (ItemTest.WeaponHandle == weapon && (Cvar.BlockEPickup && (client.Buttons & PlayerButtons.Use) != 0 || (EW.CheckDictionary(client) && EW.g_EWPlayer[client].BannedPlayer.bBanned)))
 						{
@@ -462,7 +470,7 @@ namespace EntWatchSharp
 					//Before death the hook is triggered
 					Server.NextFrame(() =>
 					{
-						foreach (Item ItemTest in EW.g_ItemList.ToList())
+						foreach (Item ItemTest in EW.g_ItemList)
 						{
 							if (ItemTest.WeaponHandle == weapon)
 							{
@@ -493,7 +501,7 @@ namespace EntWatchSharp
 
 			if (pl.IsValid)
 			{
-				foreach(Item ItemTest in EW.g_ItemList.ToList())
+				foreach(Item ItemTest in EW.g_ItemList)
 				{
 					if (ItemTest.Owner == pl)
 					{
@@ -529,6 +537,13 @@ namespace EntWatchSharp
 				EW.CheckDictionary(pl); //Add EWPlayer
 
 				EW.LoadClientPrefs(pl);
+
+				if (EW._PlayerSettingsAPI != null)
+                {
+                    EW._PlayerSettingsAPI.AddHook((player) => {
+                        EW.LoadClientPrefs(player);
+					});
+                }
 			}
 
 			EbanPlayer.GetBan(pl, true); //Set Eban
@@ -547,7 +562,7 @@ namespace EntWatchSharp
 			if (EW.g_EWPlayer.ContainsKey(@event.Userid))
 				EW.g_EWPlayer.Remove(@event.Userid);   //Remove EWPlayer
 
-			foreach(Item ItemTest in EW.g_ItemList.ToList())
+			foreach(Item ItemTest in EW.g_ItemList)
 			{
 				if (ItemTest.Owner == @event.Userid)
 				{
@@ -579,14 +594,14 @@ namespace EntWatchSharp
 				if (activator == null || !activator.IsValid || caller == null || !caller.IsValid) return true;
 
 				EW.UpdateTime();
-				foreach (Item ItemTest in EW.g_ItemList.ToList())
+				foreach (Item ItemTest in EW.g_ItemList)
 				{
 					if (ItemTest.AbilityList == null || ItemTest.AbilityList.Count == 0)
 					{
 						continue;
 					}
-
-					foreach (Ability AbilityTest in ItemTest.AbilityList.ToList())
+	
+					foreach (Ability AbilityTest in ItemTest.AbilityList)
 					{
 						if (AbilityTest == null)
 						{
@@ -651,9 +666,9 @@ namespace EntWatchSharp
 			var cValue = new CUtlSymbolLarge(hook.GetParam<CVariant>(4).Handle);
 
 			EW.UpdateTime();
-			foreach (Item ItemTest in EW.g_ItemList.ToList())
+			foreach (Item ItemTest in EW.g_ItemList)
 			{
-				foreach (Ability AbilityTest in ItemTest.AbilityList.ToList())
+				foreach (Ability AbilityTest in ItemTest.AbilityList)
 				{
 					if (AbilityTest.ButtonClass.StartsWith("game_ui::", StringComparison.OrdinalIgnoreCase))
 					{
@@ -707,7 +722,7 @@ namespace EntWatchSharp
 				if (!EW.CheckDictionary(player)) return HookResult.Continue;
 				if (EW.g_EWPlayer[player].BannedPlayer.bBanned)
 				{
-					foreach (ItemConfig ItemTest in EW.g_ItemConfig.ToList())
+					foreach (ItemConfig ItemTest in EW.g_ItemConfig.Values)
 					{
 						if (ItemTest.TriggerID > 0 && string.Equals(ItemTest.TriggerID.ToString(), trigger.UniqueHammerID))
 						{
