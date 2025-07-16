@@ -177,18 +177,18 @@ namespace EntWatchSharp
 					var weapon = EW.EntityParentRecursive(entity);
 					if (weapon != null && weapon.IsValid)
 					{
-						int iButtonID = 0;
+						string sButtonID = "";
 						if (string.Equals(entity.DesignerName, "func_button") || string.Equals(entity.DesignerName, "func_rot_button"))
-							iButtonID = Int32.Parse(new CBaseButton(entity.Handle).UniqueHammerID);
+							sButtonID = new CBaseButton(entity.Handle).UniqueHammerID;
 						else if(string.Equals(entity.DesignerName, "func_physbox"))
 						{
-							iButtonID = Int32.Parse(new CPhysBox(entity.Handle).UniqueHammerID);
+							sButtonID = new CPhysBox(entity.Handle).UniqueHammerID;
 						}
 						else 
 						{
 							var cDoor = new CBasePropDoor(entity.Handle);
 							if ((cDoor.Spawnflags & 256) != 1) return;
-							iButtonID = Int32.Parse(cDoor.UniqueHammerID);
+							sButtonID = cDoor.UniqueHammerID;
 						}
 						foreach (Item ItemTest in EW.g_ItemList.ToList())
 						{
@@ -196,20 +196,19 @@ namespace EntWatchSharp
 							{
 								foreach (Ability AbilityTest in ItemTest.AbilityList.ToList())
 								{
-									if (AbilityTest.ButtonID == 0 && string.IsNullOrEmpty(AbilityTest.ButtonClass))
+									if (string.Equals(AbilityTest.ButtonID, sButtonID) || string.IsNullOrEmpty(AbilityTest.ButtonID) || string.Equals(AbilityTest.ButtonID, "0"))
 									{
 										continue;
 									}
-									
-									if (AbilityTest.ButtonID == iButtonID || AbilityTest.ButtonID == 0)
+
 									{
 										AbilityTest.Entity = entity;
-										AbilityTest.ButtonID = iButtonID;
+										AbilityTest.ButtonID = sButtonID;
 										AbilityTest.ButtonClass = entity.DesignerName;
 										return;
 									}
 								}
-								Ability abilitytest = new("", entity.DesignerName, true, 0, 0, 0, iButtonID, entity);
+								Ability abilitytest = new("", entity.DesignerName, true, 0, 0, 0, sButtonID, entity);
 								ItemTest.AbilityList.Add(abilitytest);
 							}
 						}
@@ -228,7 +227,7 @@ namespace EntWatchSharp
 							if (ItemTest.WeaponHandle == null || !ItemTest.WeaponHandle.IsValid || ItemTest.WeaponHandle.Entity == null) continue;
 							foreach (Ability AbilityTest in ItemTest.AbilityList.ToList())
 							{
-								if (!AbilityTest.MathFindSpawned && AbilityTest.MathID > 0 && AbilityTest.MathID == Int32.Parse(cMathCounter.UniqueHammerID))
+								if (!AbilityTest.MathFindSpawned && !string.IsNullOrEmpty(AbilityTest.MathID) && !string.Equals(AbilityTest.MathID, "0") && string.Equals(AbilityTest.MathID, cMathCounter.UniqueHammerID))
 								{
 									if (AbilityTest.MathNameFix) // <objectname> + _ + <serial number from 1> example: weapon_fire_125
 									{
@@ -293,7 +292,7 @@ namespace EntWatchSharp
 					{
 						foreach (Ability AbilityTest in ItemTest.AbilityList.ToList())
 						{
-							if (AbilityTest.MathID > 0 && AbilityTest.MathCounter == cMathCounter)
+							if (!string.IsNullOrEmpty(AbilityTest.MathID) && !string.Equals(AbilityTest.MathID, "0") && AbilityTest.MathCounter == cMathCounter)
 							{
 								ItemTest.AbilityList.Remove(AbilityTest);
 								if (EW.CheckDictionary(ItemTest.Owner)) EW.g_EWPlayer[ItemTest.Owner].UsePriorityPlayer.UpdateCountButton(ItemTest.Owner);
@@ -630,25 +629,27 @@ namespace EntWatchSharp
 			if (!EW.g_CfgLoaded) return HookResult.Continue;
 
 			//var cEntity = hook.GetParam<CEntityIdentity>(0);
-			var cInput = hook.GetParam<CUtlSymbolLarge>(1);
+			var sInput = hook.GetParam<CUtlSymbolLarge>(1).String;
+			if (string.IsNullOrEmpty(sInput)) return HookResult.Continue;
 			var cActivator = hook.GetParam<CEntityInstance>(2);
 			var cCaller = hook.GetParam<CEntityInstance>(3);
 			//Fix func_physbox:OnPlayerUse begin
 			/*if (cActivator == null || !cActivator.IsValid) return HookResult.Continue;
 			if (string.Equals(cEntity?.DesignerName, "func_physbox"))
 			{
-				Console.WriteLine($"Input: cEntity - {cEntity.DesignerName} cInput - {cInput.KeyValue}");
-				if(string.Equals(cInput.KeyValue.ToLower(), "use"))
+				Console.WriteLine($"Input: cEntity - {cEntity.DesignerName} sInput - {sInput}");
+				if(string.Equals(sInput.ToLower(), "use"))
 				{
 					if (!OnButtonPressed(cActivator, cEntity.EntityInstance)) return HookResult.Handled;
 					return HookResult.Continue;
 				}
 				return HookResult.Continue;
 			}
-			if (!EW.IsGameUI(cCaller) || !string.Equals(cInput.KeyValue.ToLower(), "invalue")) return HookResult.Continue;*/
+			if (!EW.IsGameUI(cCaller) || !string.Equals(sInput.ToLower(), "invalue")) return HookResult.Continue;*/
 			//Fix func_physbox:OnPlayerUse end
-			if (cActivator == null || !cActivator.IsValid || !EW.IsGameUI(cCaller) || !string.Equals(cInput.KeyValue.ToLower(), "invalue")) return HookResult.Continue;
-			var cValue = new CUtlSymbolLarge(hook.GetParam<CVariant>(4).Handle);
+			if (cActivator == null || !cActivator.IsValid || !EW.IsGameUI(cCaller) || !string.Equals(sInput.ToLower(), "invalue")) return HookResult.Continue;
+			var cValue = hook.GetParam<CVariant>(4);
+			var sValue = cValue.FieldType == fieldtype_t.FIELD_CSTRING ? NativeAPI.GetStringFromSymbolLarge(cValue.Handle) : "";
 
 			EW.UpdateTime();
 			foreach (Item ItemTest in EW.g_ItemList.ToList())
@@ -657,7 +658,7 @@ namespace EntWatchSharp
 				{
 					if (AbilityTest.ButtonClass.StartsWith("game_ui::", StringComparison.OrdinalIgnoreCase))
 					{
-						if (string.Equals(AbilityTest.ButtonClass.ToLower()[9..], cValue.KeyValue.ToLower()))
+						if (string.Equals(AbilityTest.ButtonClass.ToLower()[9..], sValue.ToLower()))
 						{
 							if (ItemTest.Owner != null && ItemTest.Owner.IsValid && ItemTest.Owner.Pawn.IsValid && ItemTest.Owner.Pawn.Index == cActivator.Index && ItemTest.CheckDelay() && AbilityTest.Ready())
 							{
@@ -709,7 +710,7 @@ namespace EntWatchSharp
 				{
 					foreach (ItemConfig ItemTest in EW.g_ItemConfig.ToList())
 					{
-						if (ItemTest.TriggerID > 0 && string.Equals(ItemTest.TriggerID.ToString(), trigger.UniqueHammerID))
+						if (!string.IsNullOrEmpty(ItemTest.TriggerID) && !string.Equals(ItemTest.TriggerID, "0") && string.Equals(ItemTest.TriggerID, trigger.UniqueHammerID))
 						{
 							return HookResult.Handled;
 						}
