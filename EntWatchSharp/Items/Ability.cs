@@ -233,9 +233,9 @@ namespace EntWatchSharp.Items
         }
 		public bool Ready()
 		{
-			if (string.IsNullOrEmpty(ButtonClass) || ButtonID == 0)
+			if (string.IsNullOrEmpty(ButtonClass) || ButtonID == "0")
 			{
-				return false; // 空のアビリティは使用不可
+				return false;
 			}
 
 			// Maybe not needed...

@@ -592,7 +592,7 @@ namespace EntWatchSharp
 							continue;
 						}
 
-						if (string.IsNullOrEmpty(AbilityTest.ButtonClass) || AbilityTest.ButtonID == 0)
+						if (string.IsNullOrEmpty(AbilityTest.ButtonClass) || AbilityTest.ButtonID == "0")
 						{
 							continue;
 						}
