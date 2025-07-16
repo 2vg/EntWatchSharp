@@ -18,7 +18,7 @@ namespace EntWatchSharp
 		public static readonly byte HUDCHANNEL = 10;
 
 		public static double fGameTime;
-		public static Dictionary<int, ItemConfig> g_ItemConfig = [];
+		public static List<ItemConfig> g_ItemConfig = [];
 		public static List<Item> g_ItemList = [];
 		public static Scheme g_Scheme = new();
 		public static bool g_CfgLoaded = false;
@@ -82,11 +82,7 @@ namespace EntWatchSharp
 					UI.EWSysInfo("Info.Cfg.NotFound", 14);
 					return;
 				}
-				var itemConfigList = JsonSerializer.Deserialize<List<ItemConfig>>(sData);
-			             if (itemConfigList != null)
-			             {
-			                 g_ItemConfig = itemConfigList.ToDictionary(item => item.HammerID, item => item);
-			             }
+				g_ItemConfig = JsonSerializer.Deserialize<List<ItemConfig>>(sData);
 				g_CfgLoaded = true;
 			}
 			catch (Exception e)
@@ -129,11 +125,11 @@ namespace EntWatchSharp
 			if (weapon == null || !weapon.IsValid) return false;
 			try
 			{
-				if (int.TryParse(weapon.UniqueHammerID, out int iHammerID))
+				foreach (ItemConfig ItemTest in g_ItemConfig.ToList())
 				{
-					if (g_ItemConfig.TryGetValue(iHammerID, out var itemConfig))
+					if (ItemTest.ThisItemConfig(weapon.UniqueHammerID))
 					{
-						Item cNewItem = new(itemConfig, weapon);
+						Item cNewItem = new(ItemTest, weapon);
 						g_ItemList.Add(cNewItem);
 						return true;
 					}

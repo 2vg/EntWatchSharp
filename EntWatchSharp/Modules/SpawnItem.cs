@@ -21,8 +21,8 @@ namespace EntWatchSharp.Modules
             System.Collections.IList list = EW.g_ItemConfig.ToList();
             for (int i = 0; i < list.Count; i++)
 			{
-                ItemConfig ItemTest = (ItemConfig)list[i];
-                if (ItemTest != null && (ItemTest.Name.Contains(sItemName, StringComparison.OrdinalIgnoreCase) || ItemTest.ShortName.Contains(sItemName, StringComparison.OrdinalIgnoreCase)) && ItemTest.SpawnerID > 0)
+        ItemConfig ItemTest = (ItemConfig)list[i];
+				if (ItemTest != null && (ItemTest.Name.Contains(sItemName, StringComparison.OrdinalIgnoreCase) || ItemTest.ShortName.Contains(sItemName, StringComparison.OrdinalIgnoreCase)) && !string.IsNullOrEmpty(ItemTest.SpawnerID) && !string.Equals(ItemTest.SpawnerID, "0"))
 				{
 					iCount++;
 					Item = ItemTest;
@@ -39,15 +39,15 @@ namespace EntWatchSharp.Modules
                 System.Collections.IList list1 = EW.g_ItemConfig.ToList();
                 for (int i = 0; i < list1.Count; i++)
 				{
-                    ItemConfig ItemTest = (ItemConfig)list1[i];
-                    if (ItemTest != null && (ItemTest.Name.Contains(sItemName, StringComparison.OrdinalIgnoreCase) || ItemTest.ShortName.Contains(sItemName, StringComparison.OrdinalIgnoreCase)) && ItemTest.SpawnerID > 0)
+          ItemConfig ItemTest = (ItemConfig)list1[i];
+          if (ItemTest != null && (ItemTest.Name.Contains(sItemName, StringComparison.OrdinalIgnoreCase) || ItemTest.ShortName.Contains(sItemName, StringComparison.OrdinalIgnoreCase)) && !string.IsNullOrEmpty(ItemTest.SpawnerID) && !string.Equals(ItemTest.SpawnerID, "0"))
 					{
 						UI.EWReplyInfo(admin, $"~{ItemTest.Name} ({ItemTest.ShortName})", bConsole);
 					}
 				}
 				return;
 			}
-			if(Item.SpawnerID == 0)
+			if(string.IsNullOrEmpty(Item.SpawnerID) || string.Equals(Item.SpawnerID, "0"))
 			{
 				UI.EWReplyInfo(admin, "Reply.Spawn.NoCfgSpawner", bConsole);
 				return;
@@ -57,7 +57,7 @@ namespace EntWatchSharp.Modules
 			CPointTemplate entPT = null;
 			foreach (var entity in entPTs)
 			{
-				if (entity != null && Int32.Parse(entity.UniqueHammerID) == Item.SpawnerID)
+				if (entity != null && string.Equals(entity.UniqueHammerID, Item.SpawnerID))
 				{
 					entPT = entity;
 					break;
