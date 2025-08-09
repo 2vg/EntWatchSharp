@@ -723,7 +723,7 @@ namespace EntWatchSharp
 				if (!EW.CheckDictionary(player)) return HookResult.Continue;
 				if (EW.g_EWPlayer[player].BannedPlayer.bBanned)
 				{
-					foreach (ItemConfig ItemTest in EW.g_ItemConfig.Values)
+					foreach (ItemConfig ItemTest in EW.g_ItemConfig.ToList())
 					{
 						if (!string.IsNullOrEmpty(ItemTest.TriggerID) && !string.Equals(ItemTest.TriggerID, "0") && string.Equals(ItemTest.TriggerID, trigger.UniqueHammerID))
 						{

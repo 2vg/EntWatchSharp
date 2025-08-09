@@ -41,7 +41,7 @@ namespace EntWatchSharp.Items
 			AbilityList = [];
 			foreach(Ability ability in cNewItem.AbilityList)
 			{
-				if (string.IsNullOrEmpty(ability.ButtonClass) && ability.ButtonID == 0)
+				if (string.IsNullOrEmpty(ability.ButtonClass) && ability.ButtonID == "0")
 				{
 					continue;
 				}
