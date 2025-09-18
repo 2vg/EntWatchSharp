@@ -535,30 +535,48 @@ namespace EntWatchSharp
 		private HookResult OnEventPlayerDisconnect(EventPlayerDisconnect @event, GameEventInfo info)
 		{
 			if (@event.Userid == null) return HookResult.Continue;
-			OfflineFunc.PlayerDisconnect(@event.Userid);
+			
+			try
+			{
+				OfflineFunc.PlayerDisconnect(@event.Userid);
+			}
+			catch (Exception) { }
 
 			if (!EW.g_CfgLoaded) return HookResult.Continue;
 
-			if (EW.g_EWPlayer.ContainsKey(@event.Userid))
-				EW.g_EWPlayer.Remove(@event.Userid);   //Remove EWPlayer
-
-			EW.DropSpecialWeapon(@event.Userid);
-
-			foreach (Item ItemTest in EW.g_ItemList.ToList())
+			try
 			{
-				if (ItemTest.Owner == @event.Userid)
+				if (EW.g_EWPlayer.ContainsKey(@event.Userid))
+					EW.g_EWPlayer.Remove(@event.Userid);   //Remove EWPlayer
+			}
+			catch (Exception) { }
+
+			try
+			{
+				EW.DropSpecialWeapon(@event.Userid);
+			}
+			catch (Exception) { }
+
+			try
+			{
+				foreach (Item ItemTest in EW.g_ItemList.ToList())
 				{
-					ItemTest.Owner = null;
-					UI.EWChatActivity("Chat.Disconnect", EW.g_Scheme.color_disconnect, ItemTest, @event.Userid);
-					EW.g_cAPI?.OnPlayerDisconnectWithItem(ItemTest.Name, @event.Userid);
-					ClanTag.RemoveClanTag(@event.Userid);
-					ItemTest.EnableGlow();
-					if (!ItemTest.ForceDrop)
+					if (ItemTest.Owner == @event.Userid)
 					{
-						ItemTest.WeaponHandle.Remove();
+						ItemTest.Owner = null;
+						UI.EWChatActivity("Chat.Disconnect", EW.g_Scheme.color_disconnect, ItemTest, @event.Userid);
+						EW.g_cAPI?.OnPlayerDisconnectWithItem(ItemTest.Name, @event.Userid);
+						ClanTag.RemoveClanTag(@event.Userid);
+						ItemTest.EnableGlow();
+						if (!ItemTest.ForceDrop)
+						{
+							ItemTest.WeaponHandle.Remove();
+						}
 					}
 				}
 			}
+			catch (Exception) { }
+			
 			return HookResult.Continue;
 		}
 
