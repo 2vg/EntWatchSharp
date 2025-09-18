@@ -1,18 +1,18 @@
-﻿using CounterStrikeSharp.API.Core.Attributes.Registration;
+﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
-using CounterStrikeSharp.API;
-using CounterStrikeSharp.API.Modules.Timers;
-using static CounterStrikeSharp.API.Core.Listeners;
+using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
-using EntWatchSharp.Items;
-using EntWatchSharp.Helpers;
+using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.Utils;
-using EntWatchSharp.Modules.Eban;
+using EntWatchSharp.Helpers;
+using EntWatchSharp.Items;
 using EntWatchSharp.Modules;
+using EntWatchSharp.Modules.Eban;
+using static CounterStrikeSharp.API.Core.Listeners;
 
 namespace EntWatchSharp
 {
-    public partial class EntWatchSharp : BasePlugin
+	public partial class EntWatchSharp : BasePlugin
 	{
 		public void RegEvents()
 		{
@@ -107,7 +107,10 @@ namespace EntWatchSharp
 				EW.g_Timer = null;
 			}
 			EW.g_Timer = new CounterStrikeSharp.API.Modules.Timers.Timer(1.0f, TimerUpdate, TimerFlags.REPEAT);
-			LogManager.SystemAction("Info.ChangeMap", sMapName);
+			Task.Run(() =>
+			{
+				LogManager.SystemAction("Info.ChangeMap", sMapName);
+			});
 		}
 
 		private void TimerUpdate()
@@ -123,10 +126,14 @@ namespace EntWatchSharp
 			//Reban after reload plugin
 			if (EbanDB.db.bDBReady)
 			{
-				Utilities.GetPlayers().ForEach(player =>
+				Task.Run(() =>
+				{
+					Parallel.ForEach(EW.g_EWPlayer, (pair) => EbanPlayer.GetBan(pair.Key));
+				});
+				/*Utilities.GetPlayers().ForEach(player =>
 				{
 					EbanPlayer.GetBan(player);
-				});
+				});*/
 				if (EW.g_TimerRetryDB != null)
 				{
 					EW.g_TimerRetryDB.Kill();
@@ -139,7 +146,7 @@ namespace EntWatchSharp
 		{
 			string sServerName = EW.g_Scheme.server_name;
 			if (!string.IsNullOrEmpty(sServerName)) { sServerName = "Zombies Server"; }
-			
+
 			EbanDB.OfflineUnban(sServerName);
 
 			Task.Run(() =>
@@ -148,10 +155,14 @@ namespace EntWatchSharp
 			});
 
 			//Update (Un)Bans
-			Utilities.GetPlayers().ForEach(player =>
+			Task.Run(() =>
+			{
+				Parallel.ForEach(EW.g_EWPlayer, (pair) => EbanPlayer.GetBan(pair.Key));
+			});
+			/*Utilities.GetPlayers().ForEach(player =>
 			{
 				EbanPlayer.GetBan(player);
-			});
+			});*/
 		}
 
 		private void OnMapEnd_Listener()
@@ -186,11 +197,11 @@ namespace EntWatchSharp
 						string sButtonID = "";
 						if (string.Equals(entity.DesignerName, "func_button") || string.Equals(entity.DesignerName, "func_rot_button"))
 							sButtonID = new CBaseButton(entity.Handle).UniqueHammerID;
-						else if(string.Equals(entity.DesignerName, "func_physbox"))
+						else if (string.Equals(entity.DesignerName, "func_physbox"))
 						{
 							sButtonID = new CPhysBox(entity.Handle).UniqueHammerID;
 						}
-						else 
+						else
 						{
 							var cDoor = new CBasePropDoor(entity.Handle);
 							if ((cDoor.Spawnflags & 256) != 1) return;
@@ -216,7 +227,8 @@ namespace EntWatchSharp
 						}
 					}
 				});
-			} else if(string.Equals(entity.DesignerName, "math_counter"))
+			}
+			else if (string.Equals(entity.DesignerName, "math_counter"))
 			{
 				Server.NextFrame(() =>
 				{
@@ -285,7 +297,8 @@ namespace EntWatchSharp
 						}
 					}
 				});
-			}else if (string.Equals(entity.DesignerName, "math_counter"))
+			}
+			else if (string.Equals(entity.DesignerName, "math_counter"))
 			{
 				CMathCounter cMathCounter = new(entity.Handle);
 				Server.NextFrame(() =>
@@ -309,7 +322,7 @@ namespace EntWatchSharp
 		private void OnOnPlayerButtonsChanged_Listener(CCSPlayerController player, PlayerButtons pressed, PlayerButtons released)
 		{
 			if (!EW.g_CfgLoaded || !Cvar.UsePriority) return;
-			if(player != null && player.IsValid)
+			if (player != null && player.IsValid)
 			{
 				if (!EW.CheckDictionary(player)) return;
 				EW.g_EWPlayer[player].UsePriorityPlayer.DetectUse(player, pressed);
@@ -332,7 +345,7 @@ namespace EntWatchSharp
 					}*/
 					if (Cvar.GlowVIP)
 					{
-						if(!ewp.Value.PrivilegePlayer.WeaponGlow)
+						if (!ewp.Value.PrivilegePlayer.WeaponGlow)
 						{
 							foreach (Item ItemTest in EW.g_ItemList.ToList())
 							{
@@ -475,7 +488,8 @@ namespace EntWatchSharp
 						}
 					});
 				}
-			}catch (Exception) { }
+			}
+			catch (Exception) { }
 			return HookResult.Continue;
 		}
 
@@ -488,7 +502,7 @@ namespace EntWatchSharp
 
 			if (pl.IsValid)
 			{
-				foreach(Item ItemTest in EW.g_ItemList.ToList())
+				foreach (Item ItemTest in EW.g_ItemList.ToList())
 				{
 					if (ItemTest.Owner == pl)
 					{
@@ -531,52 +545,53 @@ namespace EntWatchSharp
 			return HookResult.Continue;
 		}
 
-		[GameEventHandler]
+		[GameEventHandler(mode: HookMode.Pre)]
 		private HookResult OnEventPlayerDisconnect(EventPlayerDisconnect @event, GameEventInfo info)
 		{
-			if (@event.Userid == null) return HookResult.Continue;
-			
-			try
-			{
-				OfflineFunc.PlayerDisconnect(@event.Userid);
-			}
-			catch (Exception) { }
-
-			if (!EW.g_CfgLoaded) return HookResult.Continue;
 
 			try
 			{
-				if (EW.g_EWPlayer.ContainsKey(@event.Userid))
-					EW.g_EWPlayer.Remove(@event.Userid);   //Remove EWPlayer
-			}
-			catch (Exception) { }
+				if (@event.Userid == null) return HookResult.Continue;
 
-			try
-			{
-				EW.DropSpecialWeapon(@event.Userid);
-			}
-			catch (Exception) { }
+				CCSPlayerController pl = new(@event.Userid.Handle);
 
-			try
-			{
+				OfflineFunc.PlayerDisconnect(pl);
+
+				if (!EW.g_CfgLoaded) return HookResult.Continue;
+
+				if (EW.g_EWPlayer.ContainsKey(pl))
+					EW.g_EWPlayer.Remove(pl);   //Remove EWPlayer
+
+				EW.DropSpecialWeapon(pl);
+
 				foreach (Item ItemTest in EW.g_ItemList.ToList())
 				{
-					if (ItemTest.Owner == @event.Userid)
+					if (ItemTest.Owner == pl)
 					{
 						ItemTest.Owner = null;
-						UI.EWChatActivity("Chat.Disconnect", EW.g_Scheme.color_disconnect, ItemTest, @event.Userid);
-						EW.g_cAPI?.OnPlayerDisconnectWithItem(ItemTest.Name, @event.Userid);
-						ClanTag.RemoveClanTag(@event.Userid);
+						UI.EWChatActivity("Chat.Disconnect", EW.g_Scheme.color_disconnect, ItemTest, pl);
+						EW.g_cAPI?.OnPlayerDisconnectWithItem(ItemTest.Name, pl);
+						ClanTag.RemoveClanTag(pl);
 						ItemTest.EnableGlow();
 						if (!ItemTest.ForceDrop)
 						{
-							ItemTest.WeaponHandle.Remove();
+							ItemTest.Owner = null;
+							UI.EWChatActivity("Chat.Disconnect", EW.g_Scheme.color_disconnect, ItemTest, @event.Userid);
+							EW.g_cAPI?.OnPlayerDisconnectWithItem(ItemTest.Name, @event.Userid);
+							ClanTag.RemoveClanTag(@event.Userid);
+							ItemTest.EnableGlow();
+							if (!ItemTest.ForceDrop)
+							{
+								ItemTest.WeaponHandle.Remove();
+							}
 						}
 					}
 				}
 			}
-			catch (Exception) { }
-			
+			catch (Exception)
+			{
+			}
+
 			return HookResult.Continue;
 		}
 
@@ -701,9 +716,9 @@ namespace EntWatchSharp
 				var player = new CCSPlayerController(new CCSPlayerPawn(entity.Handle).Controller.Value!.Handle);
 				var trigger = hook.GetParam<CBaseTrigger>(0);
 
-				if(!player.IsValid || !trigger.IsValid) return HookResult.Continue;
+				if (!player.IsValid || !trigger.IsValid) return HookResult.Continue;
 
-				if(Cvar.TriggerOnceException && string.Equals(trigger.DesignerName, "trigger_once")) return HookResult.Continue; //Outputs don't work but trigger disappears
+				if (Cvar.TriggerOnceException && string.Equals(trigger.DesignerName, "trigger_once")) return HookResult.Continue; //Outputs don't work but trigger disappears
 
 				//Console.WriteLine($"Player: {player.PlayerName} OnStartTouch: {trigger.Entity.Name}[HID:{trigger.UniqueHammerID}|ID:{trigger.Index}]");
 
