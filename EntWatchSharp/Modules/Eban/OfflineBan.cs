@@ -24,9 +24,22 @@ namespace EntWatchSharp.Modules.Eban
 		static OfflineBan CreateOrFind(CCSPlayerController UserID)
 		{
 			OfflineBan offlineplayer = null;
+			string steamID = null;
+			
+			try
+			{
+				steamID = EW.ConvertSteamID64ToSteamID(UserID.SteamID.ToString());
+			}
+			catch (Exception)
+			{
+				return null;
+			}
+			
+			if (string.IsNullOrEmpty(steamID)) return null;
+			
 			foreach (OfflineBan OfflineTest in EW.g_OfflinePlayer.ToList())
 			{
-				if (string.Equals(OfflineTest.SteamID, EW.ConvertSteamID64ToSteamID(UserID.SteamID.ToString())))
+				if (string.Equals(OfflineTest.SteamID, steamID))
 				{
 					offlineplayer = OfflineTest;
 					break;
@@ -37,10 +50,19 @@ namespace EntWatchSharp.Modules.Eban
 				offlineplayer = new OfflineBan();
 				EW.g_OfflinePlayer.Add(offlineplayer);
 			}
-			offlineplayer.UserID = UserID.UserId ?? 0;
-			offlineplayer.Name = UserID.PlayerName;
-			offlineplayer.SteamID = EW.ConvertSteamID64ToSteamID(UserID.SteamID.ToString());
-			offlineplayer.Immutity = AdminManager.GetPlayerImmunity(UserID);
+			
+			try
+			{
+				offlineplayer.UserID = UserID.UserId ?? 0;
+				offlineplayer.Name = UserID.PlayerName ?? "";
+				offlineplayer.SteamID = steamID;
+				offlineplayer.Immutity = AdminManager.GetPlayerImmunity(UserID);
+			}
+			catch (Exception)
+			{
+				return null;
+			}
+			
 			return offlineplayer;
 		}
 #nullable enable
@@ -48,20 +70,34 @@ namespace EntWatchSharp.Modules.Eban
 #nullable disable
 		{
 			if (UserID == null || !UserID.IsValid ||UserID.IsBot) return;
-			OfflineBan OfflinePlayer = CreateOrFind(UserID);
-			OfflinePlayer.Player = UserID;
-			OfflinePlayer.Online = true;
+			try
+			{
+				OfflineBan OfflinePlayer = CreateOrFind(UserID);
+				if (OfflinePlayer != null)
+				{
+					OfflinePlayer.Player = UserID;
+					OfflinePlayer.Online = true;
+				}
+			}
+			catch (Exception) { }
 		}
 #nullable enable
 		public static void PlayerDisconnect(CCSPlayerController? UserID)
 #nullable disable
 		{
 			if (UserID == null || !UserID.IsValid || UserID.IsBot) return;
-			OfflineBan OfflinePlayer = CreateOrFind(UserID);
-			OfflinePlayer.TimeStamp_Start = Convert.ToInt32(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
-			OfflinePlayer.TimeStamp = OfflinePlayer.TimeStamp_Start + Cvar.OfflineClearTime * 60;
-			OfflinePlayer.Player = null;
-			OfflinePlayer.Online = false;
+			try
+			{
+				OfflineBan OfflinePlayer = CreateOrFind(UserID);
+				if (OfflinePlayer != null)
+				{
+					OfflinePlayer.TimeStamp_Start = Convert.ToInt32(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+					OfflinePlayer.TimeStamp = OfflinePlayer.TimeStamp_Start + Cvar.OfflineClearTime * 60;
+					OfflinePlayer.Player = null;
+					OfflinePlayer.Online = false;
+				}
+			}
+			catch (Exception) { }
 		}
 		public static void TimeToClear()
 		{
