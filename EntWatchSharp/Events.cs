@@ -502,10 +502,32 @@ namespace EntWatchSharp
 
 			if (pl.IsValid)
 			{
+				bool dropped = false;
 				foreach (Item ItemTest in EW.g_ItemList.ToList())
 				{
 					if (ItemTest.Owner == pl)
 					{
+						if (!dropped)
+						{
+							EW.DropSpecialWeapon(pl);
+							dropped = true;
+						}
+
+						try
+						{
+							var vecPos = (System.Numerics.Vector3)pl.PlayerPawn.Value.AbsOrigin with { Z = pl.PlayerPawn.Value.AbsOrigin.Z + 30 };
+							Server.NextFrame(() =>
+							{
+								try
+								{
+									if (ItemTest.WeaponHandle != null && ItemTest.WeaponHandle.IsValid)
+										ItemTest.WeaponHandle.Teleport(vecPos);
+								}
+								catch (Exception) { }
+							});
+						}
+						catch (Exception) { }
+
 						ItemTest.Owner = null;
 						if (EW.CheckDictionary(pl)) EW.g_EWPlayer[pl].UsePriorityPlayer.UpdateCountButton(pl);
 						UI.EWChatActivity("Chat.Death", EW.g_Scheme.color_death, ItemTest, pl);
