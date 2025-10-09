@@ -69,6 +69,8 @@ namespace EntWatchSharp.Modules
 
 		private static void SetClanTag(CCSPlayerController player, string sClanTag)
 		{
+			if (player == null || !player.IsValid) return;
+			
 			if (sClanTag.Length > 24) player.Clan = sClanTag[..23];
 			else player.Clan = sClanTag;
 			Utilities.SetStateChanged(player, "CCSPlayerController", "m_szClan");

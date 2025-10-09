@@ -20,31 +20,31 @@ namespace EntWatchSharp.Modules
         }
         public void DetectUse(CCSPlayerController UPlayer, PlayerButtons PressedButtons)
         {
-            if (!EW.g_EWPlayer[UPlayer].UsePriorityPlayer.Activate || LockSpam || !OneButton) return;
-            if ((PressedButtons & PlayerButtons.Use) != 0)
-            {
-                LockSpam = true;
-                var Timer = new CounterStrikeSharp.API.Modules.Timers.Timer(0.5f, UsePriorityTimer);
-                
-                int iNum = 0;
-				foreach(Ability AbilityTest in OneItem.AbilityList.ToList())
-                {
-                    if(AbilityTest.Ignore)
-                    {
-                        iNum++;
-                        continue;
-                    }
-                    break;
-                }
-                if (iNum + 1 > OneItem.AbilityList.Count) return; //All Ignore
-
-				if (OneItem.CheckDelay() && OneItem.AbilityList[iNum].Mode != 1 && OneItem.AbilityList[iNum].Mode < 6 && OneItem.AbilityList[iNum].fLastUse < EW.fGameTime && OneItem.AbilityList[iNum].Entity != null && OneItem.AbilityList[iNum].Entity.IsValid && !OneItem.AbilityList[iNum].LockItem)
-                {
-                    //OneItem.AbilityList[0].Entity.AcceptInput("Press", UPlayer.PlayerPawn.Value, UPlayer.PlayerPawn.Value);
-                    OneItem.AbilityList[iNum].Entity.AcceptInput("Use", UPlayer.PlayerPawn.Value, UPlayer.PlayerPawn.Value);
-                    //Console.WriteLine($"Player: {UPlayer.PlayerName} pressed E ButtonID: {OneItem.AbilityList[0].Entity.Index}");
-                }
-            }
+        	if (!EW.g_EWPlayer[UPlayer].UsePriorityPlayer.Activate || LockSpam || !OneButton || OneItem == null) return;
+        	if ((PressedButtons & PlayerButtons.Use) != 0)
+        	{
+        		LockSpam = true;
+        		var Timer = new CounterStrikeSharp.API.Modules.Timers.Timer(0.5f, UsePriorityTimer);
+        		
+        		int iNum = 0;
+        		foreach(Ability AbilityTest in OneItem.AbilityList.ToList())
+        		{
+        			if(AbilityTest.Ignore)
+        			{
+        				iNum++;
+        				continue;
+        			}
+        			break;
+        		}
+        		if (iNum + 1 > OneItem.AbilityList.Count) return; //All Ignore
+       
+        		if (OneItem.CheckDelay() && OneItem.AbilityList[iNum].Mode != 1 && OneItem.AbilityList[iNum].Mode < 6 && OneItem.AbilityList[iNum].fLastUse < EW.fGameTime && OneItem.AbilityList[iNum].Entity != null && OneItem.AbilityList[iNum].Entity.IsValid && !OneItem.AbilityList[iNum].LockItem)
+        		{
+        			//OneItem.AbilityList[0].Entity.AcceptInput("Press", UPlayer.PlayerPawn.Value, UPlayer.PlayerPawn.Value);
+        			OneItem.AbilityList[iNum].Entity.AcceptInput("Use", UPlayer.PlayerPawn.Value, UPlayer.PlayerPawn.Value);
+        			//Console.WriteLine($"Player: {UPlayer.PlayerName} pressed E ButtonID: {OneItem.AbilityList[0].Entity.Index}");
+        		}
+        	}
         }
         private void UsePriorityTimer()
         {

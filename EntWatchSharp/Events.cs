@@ -292,7 +292,7 @@ namespace EntWatchSharp
 							if (AbilityTest.Entity == entity)
 							{
 								ItemTest.AbilityList.Remove(AbilityTest);
-								if (ItemTest.Owner != null && EW.CheckDictionary(ItemTest.Owner)) EW.g_EWPlayer[ItemTest.Owner].UsePriorityPlayer.UpdateCountButton(ItemTest.Owner);
+								if (ItemTest.Owner != null && ItemTest.Owner.IsValid && EW.CheckDictionary(ItemTest.Owner)) EW.g_EWPlayer[ItemTest.Owner].UsePriorityPlayer.UpdateCountButton(ItemTest.Owner);
 							}
 						}
 					}
@@ -310,7 +310,7 @@ namespace EntWatchSharp
 							if (!string.IsNullOrEmpty(AbilityTest.MathID) && !string.Equals(AbilityTest.MathID, "0") && AbilityTest.MathCounter == cMathCounter)
 							{
 								ItemTest.AbilityList.Remove(AbilityTest);
-								if (EW.CheckDictionary(ItemTest.Owner)) EW.g_EWPlayer[ItemTest.Owner].UsePriorityPlayer.UpdateCountButton(ItemTest.Owner);
+								if (ItemTest.Owner != null && ItemTest.Owner.IsValid && EW.CheckDictionary(ItemTest.Owner)) EW.g_EWPlayer[ItemTest.Owner].UsePriorityPlayer.UpdateCountButton(ItemTest.Owner);
 							}
 						}
 					}
@@ -597,15 +597,7 @@ namespace EntWatchSharp
 						ItemTest.EnableGlow();
 						if (!ItemTest.ForceDrop)
 						{
-							ItemTest.Owner = null;
-							UI.EWChatActivity("Chat.Disconnect", EW.g_Scheme.color_disconnect, ItemTest, @event.Userid);
-							EW.g_cAPI?.OnPlayerDisconnectWithItem(ItemTest.Name, @event.Userid);
-							ClanTag.RemoveClanTag(@event.Userid);
-							ItemTest.EnableGlow();
-							if (!ItemTest.ForceDrop)
-							{
-								ItemTest.WeaponHandle.Remove();
-							}
+							ItemTest.WeaponHandle.Remove();
 						}
 					}
 				}

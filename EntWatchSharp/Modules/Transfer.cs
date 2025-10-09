@@ -80,7 +80,11 @@ namespace EntWatchSharp.Modules
 				{
 					try
 					{
-						if (ItemTest != null && ItemTest.WeaponHandle.IsValid) ItemTest.WeaponHandle.Teleport((System.Numerics.Vector3)receiver.Pawn.Value.AbsOrigin, null, null);
+						if (ItemTest != null && ItemTest.WeaponHandle != null && ItemTest.WeaponHandle.IsValid &&
+						    receiver != null && receiver.IsValid && receiver.Pawn.Value != null && receiver.Pawn.Value.IsValid && receiver.Pawn.Value.AbsOrigin != null)
+						{
+							ItemTest.WeaponHandle.Teleport((System.Numerics.Vector3)receiver.Pawn.Value.AbsOrigin, null, null);
+						}
 					}
 					catch (Exception) { }
 				});
